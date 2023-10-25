@@ -174,7 +174,7 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
     if (init_count > 300)
         init_count = 0;
 
-    // count the time after posture is detected
+    // tratamento de flags
     if (flag_rpalm == 1) {
         rpalm_count++;
         rpaml_not_count = 0;
