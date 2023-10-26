@@ -82,7 +82,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
     }
 
     // detector for left palm
-    cv::CascadeClassifier lpalm_cascade;
+
+    /*cv::CascadeClassifier lpalm_cascade;
     if (!lpalm_cascade.load("./cascades/lpalm.xml"))
         std::cout << ("--(!)Error loading lpalm\n");
     std::vector<cv::Rect> lpalm;
@@ -103,8 +104,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
             big_lpalm = lpalm[i];
         }
         cv::Point center(lpalm[i].x + lpalm[i].width * 0.5, lpalm[i].y + lpalm[i].height * 0.5);
-        cv::rectangle(output, lpalm[i], cv::Scalar(0, 0, 0), 2); // preto
-    }
+        // cv::rectangle(output, lpalm[i], cv::Scalar(0, 0, 0), 2); // preto
+    }*/
 
     // detector for fist
     cv::CascadeClassifier fist_cascade;
