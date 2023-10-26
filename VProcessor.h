@@ -398,23 +398,47 @@ class VideoProcessor {
         int buttonWidth = frameWidth / 5; // Largura do botão como uma quinta parte da largura do frame
         int padding = 10;                 // Padding entre os botões e a borda do frame
 
-        // Botão verde no meio com padding no topo
+        // Botão verde
         drawTransRect(frame, cv::Scalar(0, 255, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth));
+        drawImage(frame, "./icons/hand.png", frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth);
 
-        // Botão azul no meio com padding na base
+        // Botão azul
         drawTransRect(frame, cv::Scalar(255, 0, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth));
+        drawImage(frame, "./icons/hand-fist.png", frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth);
 
-        // Botão amarelo à esquerda com padding
+        // Botão amarelo
         drawTransRect(frame, cv::Scalar(0, 255, 255), alpha, cv::Rect(padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
+        drawImage(frame, "./icons/hand-left.png", padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
 
-        // Botão vermelho à direita com padding
+        // Botão vermelho
         drawTransRect(frame, cv::Scalar(0, 0, 255), alpha, cv::Rect(frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
+        drawImage(frame, "./icons/hand-right.png", frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
     }
 
     void drawTransRect(cv::Mat frame, cv::Scalar color, double alpha, cv::Rect region) {
         cv::Mat roi = frame(region);
         cv::Mat rectImg(roi.size(), CV_8UC3, color);
         addWeighted(rectImg, alpha, roi, 1.0 - alpha, 0, roi);
+    }
+
+    void drawImage(cv::Mat frame, const std::string &imagePath, int x, int y, int width, int height) {
+
+        cv::Mat image = cv::imread(imagePath, cv::IMREAD_UNCHANGED);
+        drawTransparency(frame, image, x, y);
+
+        cv::Mat mask;
+        std::vector<cv::Mat> layers;
+
+        cv::resize(image, image, cv::Size(width, height));
+
+        cv::split(image, layers); // seperate channels
+        cv::Mat rgb[3] = {layers[0], layers[1], layers[2]};
+        mask = layers[3];     // png's alpha channel used as mask
+        merge(rgb, 3, image); // put together the RGB channels, now transp insn't transparent
+        image.copyTo(frame.rowRange(y, y + image.rows).colRange(x, x + image.cols), mask);
+    }
+
+    void drawTransparency(cv::Mat frame, cv::Mat transp, int xPos, int yPos) {
     }
 };
 
