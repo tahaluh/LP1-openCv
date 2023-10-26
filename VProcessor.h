@@ -393,13 +393,22 @@ class VideoProcessor {
 
     void drawButtons(cv::Mat frame) {
         double alpha = 0.3;
-        drawTransRect(frame, cv::Scalar(0, 255, 0), alpha, cv::Rect(0, 0, 40, 40)); 
+        int frameWidth = frame.cols;      // Obtém a largura do frame
+        int frameHeight = frame.rows;     // Obtém a altura do frame
+        int buttonWidth = frameWidth / 5; // Largura do botão como uma quinta parte da largura do frame
+        int padding = 10;                 // Padding entre os botões e a borda do frame
 
-        drawTransRect(frame, cv::Scalar(255, 0, 0), alpha, cv::Rect(40, 0, 40, 40)); // zul
+        // Botão verde no meio com padding no topo
+        drawTransRect(frame, cv::Scalar(0, 255, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth));
 
-        drawTransRect(frame, cv::Scalar(0, 255, 255), alpha, cv::Rect(80, 0, 40, 40)); // marelo
+        // Botão azul no meio com padding na base
+        drawTransRect(frame, cv::Scalar(255, 0, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth));
 
-        drawTransRect(frame, cv::Scalar(0, 0, 255), alpha, cv::Rect(120, 0, 40, 40)); //vermeio
+        // Botão amarelo à esquerda com padding
+        drawTransRect(frame, cv::Scalar(0, 255, 255), alpha, cv::Rect(padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
+
+        // Botão vermelho à direita com padding
+        drawTransRect(frame, cv::Scalar(0, 0, 255), alpha, cv::Rect(frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
     }
 
     void drawTransRect(cv::Mat frame, cv::Scalar color, double alpha, cv::Rect region) {
