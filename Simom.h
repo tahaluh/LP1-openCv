@@ -15,6 +15,8 @@ class Simom {
 
     void iniciarJogo() {
         sequence.clear();
+        entradaJogador.clear();
+
         pontos = 0;
         adicionarCorAleatoria();
     }
