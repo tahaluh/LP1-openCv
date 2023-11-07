@@ -9,8 +9,6 @@
 
 static int init_count;
 
-static int delay = 5;
-
 // count
 
 static int fist_count;
@@ -49,6 +47,8 @@ static int radius = 50;
 static float scale_factor = 0.8;
 static int larguraIcon = (2 * radius * scale_factor);
 static int alturaIcon = (2 * radius * scale_factor);
+static int timeDelay = 15;
+static int timeWait = 10;
 
 void reset_all_postures() {
     flag_fist = 0;
@@ -74,7 +74,7 @@ void drawImage(cv::Mat frame, const std::string &imagePath, int x, int y, int wi
     image.copyTo(frame.rowRange(y, y + image.rows).colRange(x, x + image.cols), mask);
 }
 
-void getSkin(cv::Mat &src, cv::Mat &output) {
+int getSkin(cv::Mat &src, cv::Mat &output) {
     int time_count1 = 0;
     int time_count2 = 0;
 
@@ -102,7 +102,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         }
 
         cv::Point center(rpalm[i].x + rpalm[i].width * 0.5, rpalm[i].y + rpalm[i].height * 0.5);
-        cv::circle(output, center, radius, cv::Scalar(0, 255, 0), 2, cv::LINE_AA); // Verde
+        cv::circle(output, center, radius, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);                       // Verde
+        cv::circle(output, center, (rpalm_count * 1.0 / timeDelay) * radius, cv::Scalar(0, 255, 0), -1); // Verde, -1 preenche o círculo
 
         int posx = center.x - larguraIcon / 2;
         int posy = center.y - alturaIcon / 2;
@@ -158,7 +159,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         }
 
         cv::Point center(fists[i].x + fists[i].width * 0.5, fists[i].y + fists[i].height * 0.5);
-        cv::circle(output, center, radius, cv::Scalar(255, 0, 0), 2, cv::LINE_AA); // Azul
+        cv::circle(output, center, radius, cv::Scalar(255, 0, 0), 2, cv::LINE_AA);                      // Azul
+        cv::circle(output, center, (fist_count * 1.0 / timeDelay) * radius, cv::Scalar(255, 0, 0), -1); // Azul, -1 preenche o círculo
 
         int posx = center.x - larguraIcon / 2;
         int posy = center.y - alturaIcon / 2;
@@ -183,7 +185,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
     }
     for (int i = 0; i < rect_right.size(); i++) {
         cv::Point center(rect_right[i].x + rect_right[i].width * 0.5, rect_right[i].y + rect_right[i].height * 0.5);
-        cv::circle(output, center, radius, cv::Scalar(0, 0, 255), 2, cv::LINE_AA); // Vermelho
+        cv::circle(output, center, radius, cv::Scalar(0, 0, 255), 2, cv::LINE_AA);                       // Vermelho
+        cv::circle(output, center, (right_count * 1.0 / timeDelay) * radius, cv::Scalar(0, 0, 255), -1); // Vermelho, -1 preenche o círculo
 
         int posx = center.x - larguraIcon / 2;
         int posy = center.y - alturaIcon / 2;
@@ -209,7 +212,8 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
     for (int i = 0; i < rect_left.size(); i++) {
 
         cv::Point center(rect_left[i].x + rect_left[i].width * 0.5, rect_left[i].y + rect_left[i].height * 0.5);
-        cv::circle(output, center, radius, cv::Scalar(0, 255, 255), 2, cv::LINE_AA); // Amarelo
+        cv::circle(output, center, radius, cv::Scalar(0, 255, 255), 2, cv::LINE_AA);                      // Amarelo
+        cv::circle(output, center, (left_count * 1.0 / timeDelay) * radius, cv::Scalar(0, 255, 255), -1); // Amarelo, -1 preenche o círculo
 
         int posx = center.x - larguraIcon / 2;
         int posy = center.y - alturaIcon / 2;
@@ -222,52 +226,81 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         init_count = 0;
 
     // tratamento de flags
-    if (flag_rpalm == 1) {
-        rpalm_count++;
-        rpaml_not_count = 0;
+
+    /*
+    if (flag_lpalm == 1) {
+        if (lpalm_count > timeDelay) {
+            std::cout << "lpalm_count: " << lpalm_count << std::endl;
+            return
+        } else {
+            lpalm_count++;
+            lpalm_not_count = 0;
+        }
     } else {
-        if (rpaml_not_count > delay)
+        if (lpalm_not_count > timeWait)
+            lpalm_count = 0;
+        lpalm_not_count++;
+    }
+    */
+
+    int resultSinal = -1;
+
+    if (flag_rpalm == 1) {
+
+        if (rpalm_count > timeDelay) {
+            resultSinal = 0;
+        } else {
+            rpalm_count++;
+            rpaml_not_count = 0;
+        }
+    } else {
+        if (rpaml_not_count > timeWait)
             rpalm_count = 0;
         rpaml_not_count++;
     }
 
-    if (flag_lpalm == 1) {
-        lpalm_count++;
-        lpalm_not_count = 0;
-    } else {
-        if (lpalm_not_count > delay)
-            lpalm_count = 0;
-        lpalm_not_count++;
-    }
-
     if (flag_fist == 1) {
-        fist_count++;
-        fist_not_count = 0;
+        if (fist_count > timeDelay) {
+            resultSinal = 2;
+        } else {
+            fist_count++;
+            fist_not_count = 0;
+        }
     } else {
-        if (fist_not_count > delay)
+        if (fist_not_count > timeWait)
             fist_count = 0;
         fist_not_count++;
     }
 
     if (flag_pright == 1) {
-        right_count++;
-        right_not_count = 0;
+        if (right_count > timeDelay) {
+            resultSinal = 1;
+        } else {
+            right_count++;
+            right_not_count = 0;
+        }
     } else {
-        if (right_not_count > delay)
+        if (right_not_count > timeWait)
             right_count = 0;
         right_not_count++;
     }
 
     if (flag_pleft == 1) {
-        left_count++;
-        left_not_count = 0;
+        if (left_count > timeDelay) {
+            resultSinal = 3;
+        } else {
+            left_count++;
+            left_not_count = 0;
+        }
     } else {
-        if (left_not_count > delay)
+        if (left_not_count > timeWait)
             left_count = 0;
         left_not_count++;
     }
 
     reset_all_postures();
+
+    return resultSinal;
 }
 
 #endif

@@ -19,7 +19,7 @@ class VideoProcessor {
 
   private:
     cv::VideoCapture capture;
-    void (*process)(cv::Mat &, cv::Mat &);
+    int (*process)(cv::Mat &, cv::Mat &);
     FrameProcessor *frameProcessor;
     bool callIt;
     std::string windowNameInput;
@@ -139,7 +139,7 @@ class VideoProcessor {
         return true;
     }
 
-    void setFrameProcessor(void (*frameProcessingCallback)(cv::Mat &, cv::Mat &)) {
+    void setFrameProcessor(int (*frameProcessingCallback)(cv::Mat &, cv::Mat &)) {
 
         frameProcessor = 0;
         process = frameProcessingCallback;
@@ -352,6 +352,9 @@ class VideoProcessor {
 
         stop = false;
 
+        int sinalJogada = -1;
+        int sinalAnterior = -1;
+
         while (!isStopped()) {
 
             if (!readNextFrame(frame))
@@ -362,9 +365,9 @@ class VideoProcessor {
 
             if (callIt) {
 
-                if (process)
-                    process(frame, output);
-                else if (frameProcessor)
+                if (process) {
+                    sinalJogada = process(frame, output);
+                } else if (frameProcessor)
                     frameProcessor->process(frame, output);
                 fnumber++;
 
@@ -372,6 +375,13 @@ class VideoProcessor {
 
                 drawButtons(frame);
 
+                // faz a jogada de acordo com o sinal
+                if (sinalJogada != -1 && sinalJogada != sinalAnterior) {
+                    std::cout << "sinalJogada: " << sinalJogada << std::endl;
+                    sinalAnterior = sinalJogada;
+                } else if (sinalJogada == -1) {
+                    sinalAnterior = -1;
+                }
             } else {
 
                 output = frame;
