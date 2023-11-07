@@ -424,7 +424,6 @@ class VideoProcessor {
     void drawImage(cv::Mat frame, const std::string &imagePath, int x, int y, int width, int height) {
 
         cv::Mat image = cv::imread(imagePath, cv::IMREAD_UNCHANGED);
-        drawTransparency(frame, image, x, y);
 
         cv::Mat mask;
         std::vector<cv::Mat> layers;
@@ -436,9 +435,6 @@ class VideoProcessor {
         mask = layers[3];     // png's alpha channel used as mask
         merge(rgb, 3, image); // put together the RGB channels, now transp insn't transparent
         image.copyTo(frame.rowRange(y, y + image.rows).colRange(x, x + image.cols), mask);
-    }
-
-    void drawTransparency(cv::Mat frame, cv::Mat transp, int xPos, int yPos) {
     }
 };
 

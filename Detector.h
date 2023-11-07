@@ -43,12 +43,35 @@ static bool flag_pleft = 0;
 static char posture = 0;
 static bool change_posture = 0;
 
+// draw
+
+static int radius = 50;
+static float scale_factor = 0.8;
+static int larguraIcon = (2 * radius * scale_factor);
+static int alturaIcon = (2 * radius * scale_factor);
+
 void reset_all_postures() {
     flag_fist = 0;
     flag_rpalm = 0;
     flag_lpalm = 0;
     flag_pright = 0;
     flag_pleft = 0;
+}
+
+void drawImage(cv::Mat frame, const std::string &imagePath, int x, int y, int width, int height) {
+
+    cv::Mat image = cv::imread(imagePath, cv::IMREAD_UNCHANGED);
+
+    cv::Mat mask;
+    std::vector<cv::Mat> layers;
+
+    cv::resize(image, image, cv::Size(width, height));
+
+    cv::split(image, layers); // seperate channels
+    cv::Mat rgb[3] = {layers[0], layers[1], layers[2]};
+    mask = layers[3];     // png's alpha channel used as mask
+    merge(rgb, 3, image); // put together the RGB channels, now transp insn't transparent
+    image.copyTo(frame.rowRange(y, y + image.rows).colRange(x, x + image.cols), mask);
 }
 
 void getSkin(cv::Mat &src, cv::Mat &output) {
@@ -77,8 +100,14 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         {
             big_rpalm = rpalm[i];
         }
+
         cv::Point center(rpalm[i].x + rpalm[i].width * 0.5, rpalm[i].y + rpalm[i].height * 0.5);
-        cv::rectangle(output, rpalm[i], cv::Scalar(0, 255, 0), 2); // verder
+        cv::circle(output, center, radius, cv::Scalar(0, 255, 0), 2, cv::LINE_AA); // Verde
+
+        int posx = center.x - larguraIcon / 2;
+        int posy = center.y - alturaIcon / 2;
+
+        drawImage(output, "./icons/hand.png", posx, posy, larguraIcon, alturaIcon);
     }
 
     // detector for left palm
@@ -127,8 +156,14 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         {
             big_fist = fists[i];
         }
+
         cv::Point center(fists[i].x + fists[i].width * 0.5, fists[i].y + fists[i].height * 0.5);
-        cv::rectangle(output, fists[i], cv::Scalar(255, 0, 0), 2); // vermelho
+        cv::circle(output, center, radius, cv::Scalar(255, 0, 0), 2, cv::LINE_AA); // Azul
+
+        int posx = center.x - larguraIcon / 2;
+        int posy = center.y - alturaIcon / 2;
+
+        drawImage(output, "./icons/hand-fist.png", posx, posy, larguraIcon, alturaIcon);
     }
 
     // detector for right
@@ -148,7 +183,12 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
     }
     for (int i = 0; i < rect_right.size(); i++) {
         cv::Point center(rect_right[i].x + rect_right[i].width * 0.5, rect_right[i].y + rect_right[i].height * 0.5);
-        cv::rectangle(output, rect_right[i], cv::Scalar(0, 0, 255), 2); // azul
+        cv::circle(output, center, radius, cv::Scalar(0, 0, 255), 2, cv::LINE_AA); // Vermelho
+
+        int posx = center.x - larguraIcon / 2;
+        int posy = center.y - alturaIcon / 2;
+
+        drawImage(output, "./icons/hand-left.png", posx, posy, larguraIcon, alturaIcon);
     }
 
     // detector for left
@@ -167,8 +207,14 @@ void getSkin(cv::Mat &src, cv::Mat &output) {
         flag_no_posture = flag_no_posture & 0xF7;
     }
     for (int i = 0; i < rect_left.size(); i++) {
+
         cv::Point center(rect_left[i].x + rect_left[i].width * 0.5, rect_left[i].y + rect_left[i].height * 0.5);
-        cv::rectangle(output, rect_left[i], cv::Scalar(0, 255, 255), 2); // amarelo
+        cv::circle(output, center, radius, cv::Scalar(0, 255, 255), 2, cv::LINE_AA); // Amarelo
+
+        int posx = center.x - larguraIcon / 2;
+        int posy = center.y - alturaIcon / 2;
+
+        drawImage(output, "./icons/hand-right.png", posx, posy, larguraIcon, alturaIcon);
     }
 
     init_count++;
