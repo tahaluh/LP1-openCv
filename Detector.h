@@ -246,7 +246,6 @@ int getSkin(cv::Mat &src, cv::Mat &output) {
     int resultSinal = -1;
 
     if (flag_rpalm == 1) {
-
         if (rpalm_count > timeDelay) {
             resultSinal = 0;
         } else {
@@ -254,6 +253,9 @@ int getSkin(cv::Mat &src, cv::Mat &output) {
             rpaml_not_count = 0;
         }
     } else {
+        if (rpalm_count > timeDelay) {
+            resultSinal = 0;
+        }
         if (rpaml_not_count > timeWait)
             rpalm_count = 0;
         rpaml_not_count++;
@@ -267,6 +269,9 @@ int getSkin(cv::Mat &src, cv::Mat &output) {
             fist_not_count = 0;
         }
     } else {
+        if (fist_count > timeDelay) {
+            resultSinal = 2;
+        }
         if (fist_not_count > timeWait)
             fist_count = 0;
         fist_not_count++;
@@ -280,6 +285,9 @@ int getSkin(cv::Mat &src, cv::Mat &output) {
             right_not_count = 0;
         }
     } else {
+        if (right_count > timeDelay) {
+            resultSinal = 1;
+        }
         if (right_not_count > timeWait)
             right_count = 0;
         right_not_count++;
@@ -293,6 +301,9 @@ int getSkin(cv::Mat &src, cv::Mat &output) {
             left_not_count = 0;
         }
     } else {
+        if (left_count > timeDelay) {
+            resultSinal = 3;
+        }
         if (left_not_count > timeWait)
             left_count = 0;
         left_not_count++;

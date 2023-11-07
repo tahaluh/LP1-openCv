@@ -1,12 +1,15 @@
 #if !defined VPROCESSOR
 #define VPROCESSOR
 
+#include <Windows.h>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 class FrameProcessor {
@@ -38,6 +41,36 @@ class VideoProcessor {
     int currentIndex;
     int digits;
     std::string extension;
+
+    void tocaSom(int sinalJogada) {
+        std::string filePath = "./sounds/beep";
+        switch (sinalJogada) {
+        case 0:
+            filePath += "01.wav";
+            break;
+        case 1:
+            filePath += "02.wav";
+            break;
+        case 2:
+            filePath += "03.wav";
+            break;
+        case 3:
+            filePath += "04.wav";
+            break;
+        default:
+            filePath += "01.wav";
+            break;
+        }
+        tocarAudio(filePath.c_str());
+    }
+
+    bool tocarAudio(const char *filePath) {
+        if (PlaySoundA(filePath, NULL, SND_FILENAME | SND_ASYNC) == 0) {
+            std::cerr << "Erro ao reproduzir o som." << std::endl;
+            return false;
+        }
+        return true;
+    }
 
     bool readNextFrame(cv::Mat &frame) {
 
@@ -375,9 +408,9 @@ class VideoProcessor {
 
                 drawButtons(frame);
 
-                // faz a jogada de acordo com o sinal
                 if (sinalJogada != -1 && sinalJogada != sinalAnterior) {
                     std::cout << "sinalJogada: " << sinalJogada << std::endl;
+                    tocaSom(sinalJogada);
                     sinalAnterior = sinalJogada;
                 } else if (sinalJogada == -1) {
                     sinalAnterior = -1;
@@ -402,27 +435,43 @@ class VideoProcessor {
     }
 
     void drawButtons(cv::Mat frame) {
-        double alpha = 0.3;
+        float alpha = 0.5;
+
+        drawButton(frame, 0, alpha);
+        drawButton(frame, 1, alpha);
+        drawButton(frame, 2, alpha);
+        drawButton(frame, 3, alpha);
+    }
+
+    void drawButton(cv::Mat frame, int colorId, float alpha) {
         int frameWidth = frame.cols;      // Obtém a largura do frame
         int frameHeight = frame.rows;     // Obtém a altura do frame
         int buttonWidth = frameWidth / 5; // Largura do botão como uma quinta parte da largura do frame
         int padding = 10;                 // Padding entre os botões e a borda do frame
 
         // Botão verde
-        drawTransRect(frame, cv::Scalar(0, 255, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth));
-        drawImage(frame, "./icons/hand.png", frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth);
+        if (colorId == 0) {
+            drawTransRect(frame, cv::Scalar(0, 255, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth));
+            drawImage(frame, "./icons/hand.png", frameWidth / 2 - buttonWidth / 2, padding, buttonWidth, buttonWidth);
+        }
 
         // Botão azul
-        drawTransRect(frame, cv::Scalar(255, 0, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth));
-        drawImage(frame, "./icons/hand-fist.png", frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth);
+        if (colorId == 2) {
+            drawTransRect(frame, cv::Scalar(255, 0, 0), alpha, cv::Rect(frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth));
+            drawImage(frame, "./icons/hand-fist.png", frameWidth / 2 - buttonWidth / 2, frameHeight - buttonWidth - padding, buttonWidth, buttonWidth);
+        }
 
         // Botão amarelo
-        drawTransRect(frame, cv::Scalar(0, 255, 255), alpha, cv::Rect(padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
-        drawImage(frame, "./icons/hand-left.png", padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
+        if (colorId == 3) {
+            drawTransRect(frame, cv::Scalar(0, 255, 255), alpha, cv::Rect(padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
+            drawImage(frame, "./icons/hand-left.png", padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
+        }
 
         // Botão vermelho
-        drawTransRect(frame, cv::Scalar(0, 0, 255), alpha, cv::Rect(frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
-        drawImage(frame, "./icons/hand-right.png", frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
+        if (colorId == 1) {
+            drawTransRect(frame, cv::Scalar(0, 0, 255), alpha, cv::Rect(frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth));
+            drawImage(frame, "./icons/hand-right.png", frameWidth - buttonWidth - padding, frameHeight / 2 - buttonWidth / 2, buttonWidth, buttonWidth);
+        }
     }
 
     void drawTransRect(cv::Mat frame, cv::Scalar color, double alpha, cv::Rect region) {
