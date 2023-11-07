@@ -55,6 +55,7 @@ class Simom {
 
   private:
     std::vector<int> sequence;
+    std::vector<int> entradaJogador;
     int pontos = 0;
     int highscore = 0;
 
@@ -105,6 +106,4 @@ class Simom {
         }
         return true;
     }
-
-    std::vector<int> entradaJogador;
 };
