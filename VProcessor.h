@@ -1,6 +1,7 @@
 #if !defined VPROCESSOR
 #define VPROCESSOR
 
+#include "Simom.h"
 #include <Windows.h>
 #include <fstream>
 #include <iomanip>
@@ -21,6 +22,14 @@ class FrameProcessor {
 class VideoProcessor {
 
   private:
+    Simom simomGame;
+    int contadorPiscada = 0;
+    bool mostrandoSequencia = false;
+    int nPiscadas = 7;
+    int timePiscada = 200;
+    int nInterval = 4;
+    int timeInterval = 150;
+
     cv::VideoCapture capture;
     int (*process)(cv::Mat &, cv::Mat &);
     FrameProcessor *frameProcessor;
@@ -105,6 +114,11 @@ class VideoProcessor {
     VideoProcessor() : callIt(false), delay(-1),
                        fnumber(0), stop(false), digits(0), frameToStop(-1),
                        process(0), frameProcessor(0) {}
+
+    void iniciarJogo() {
+        simomGame.iniciarJogo();
+        this->mostrandoSequencia = true;
+    }
 
     bool setInput(std::string filename) {
 
@@ -397,26 +411,41 @@ class VideoProcessor {
                 cv::imshow(windowNameInput, frame);
 
             if (callIt) {
+                if (!mostrandoSequencia) {
+                    if (process) {
+                        sinalJogada = process(frame, output);
+                    } else if (frameProcessor)
+                        frameProcessor->process(frame, output);
+                    fnumber++;
 
-                if (process) {
-                    sinalJogada = process(frame, output);
-                } else if (frameProcessor)
-                    frameProcessor->process(frame, output);
-                fnumber++;
+                    cv::flip(frame, output, 1); // flipa a imagem
 
-                cv::flip(frame, output, 1); // flipa a imagem
+                    drawButtons(frame);
 
-                drawButtons(frame);
+                    // trata ação de jogo
+                    if (sinalJogada != -1 && sinalJogada != sinalAnterior) {
+                        std::cout << "sinalJogada: " << sinalJogada << std::endl;
+                        sinalAnterior = sinalJogada;
 
-                if (sinalJogada != -1 && sinalJogada != sinalAnterior) {
-                    std::cout << "sinalJogada: " << sinalJogada << std::endl;
-                    tocaSom(sinalJogada);
-                    sinalAnterior = sinalJogada;
-                } else if (sinalJogada == -1) {
-                    sinalAnterior = -1;
+                        int resultadoJogada = simomGame.realizaJogada(sinalJogada);
+
+                        if (resultadoJogada == 1) {
+                            tocaSom(sinalJogada);
+                            mostrandoSequencia = true;
+                        } else if (resultadoJogada == -1) {
+                            sequenciaPerdeu(frame);
+                        } else {
+                            tocaSom(sinalJogada);
+                        }
+
+                    } else if (sinalJogada == -1) {
+                        sinalAnterior = -1;
+                    }
+                } else {
+                    piscaSequencia(frame);
+                    output = frame;
                 }
             } else {
-
                 output = frame;
             }
 
@@ -432,6 +461,93 @@ class VideoProcessor {
             if (frameToStop >= 0 && getFrameNumber() == frameToStop)
                 stopIt();
         }
+    }
+
+    void sequenciaPerdeu(cv::Mat &frame) {
+        std::cout << "Você perdeu!" << std::endl;
+        tocarAudio("./sounds/lose1.wav");
+
+        // Define o texto e a posição no centro da imagem
+        std::string mensagem = "Voce perdeu!";
+        std::string mensagem2 = "Pontuacao: " + std::to_string(simomGame.getPontos());
+        std::string mensagem3 = "Maior: " + std::to_string(simomGame.getHighscore());
+        int fontSize = 1;  // Tamanho da fonte
+        int thickness = 2; // Espessura do texto
+        int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+        cv::Size textSize = cv::getTextSize(mensagem, fontFace, fontSize, thickness, 0);
+        cv::Point textOrg((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2 - textSize.height * 2);
+        cv::Point textOrg2((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2);
+        cv::Point textOrg3((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2 + textSize.height * 2);
+
+        for (int i = 0; i < nInterval * 5; ++i) {
+            if (i % 2 == 0) {
+                drawButton(frame, 0, 0.8);
+                drawButton(frame, 1, 0.8);
+                drawButton(frame, 2, 0.8);
+                drawButton(frame, 3, 0.8);
+            }
+
+            cv::putText(frame, mensagem, textOrg, fontFace, fontSize, cv::Scalar(255, 255, 255), thickness);
+            cv::putText(frame, mensagem2, textOrg2, fontFace, fontSize, cv::Scalar(255, 255, 255), thickness);
+            cv::putText(frame, mensagem3, textOrg3, fontFace, fontSize, cv::Scalar(255, 255, 255), thickness);
+
+            cv::imshow(windowNameOutput, frame); // Exibe o frame atualizado na mesma janela
+            if (i != nInterval - 1)
+                cv::waitKey(timeInterval);    // Aguarde o tempo de piscada
+            frame.setTo(cv::Scalar(0, 0, 0)); // Limpe o frame para preto novamente
+        }
+
+        simomGame.iniciarJogo();
+
+        mostrandoSequencia = true;
+    }
+
+    void piscaSequencia(cv::Mat &frame) {
+        std::vector<int> sequencia = simomGame.getSequencia();
+
+        std::string mensagem = "Pontuacao: " + std::to_string(simomGame.getPontos());
+        int fontSize = 1;  // Tamanho da fonte
+        int thickness = 2; // Espessura do texto
+        int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+        cv::Size textSize = cv::getTextSize(mensagem, fontFace, fontSize, thickness, 0);
+        cv::Point textOrg((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2);
+
+        if (sequencia.size() > 1)
+            cv::waitKey(1000); // Aguarde o tempo de piscada
+
+        for (size_t j = 0; j < sequencia.size(); ++j) {
+            frame.setTo(cv::Scalar(0, 0, 0)); // Limpe o frame para preto
+
+            tocaSom(sequencia[j]);
+            for (int i = 0; i < nPiscadas; ++i) {
+                if (i % 2 == 0) {
+                    drawButton(frame, sequencia[j], 0.8); // Desenha o botão apenas nas piscadas pares
+                }
+
+                cv::putText(frame, mensagem, textOrg, fontFace, fontSize, cv::Scalar(255, 255, 255), thickness);
+
+                cv::imshow(windowNameOutput, frame); // Exibe o frame atualizado na mesma janela
+                cv::waitKey(timePiscada);            // Aguarde o tempo de piscada
+                frame.setTo(cv::Scalar(0, 0, 0));    // Limpe o frame para preto novamente
+            }
+
+            for (int i = 0; i < nInterval; ++i) {
+                if (i % 2 == 0) {
+                    drawButton(frame, 0, 0.8);
+                    drawButton(frame, 1, 0.8);
+                    drawButton(frame, 2, 0.8);
+                    drawButton(frame, 3, 0.8);
+                }
+
+                cv::putText(frame, mensagem, textOrg, fontFace, fontSize, cv::Scalar(255, 255, 255), thickness);
+                cv::imshow(windowNameOutput, frame); // Exibe o frame atualizado na mesma janela
+                if (i != nInterval - 1)
+                    cv::waitKey(timeInterval);    // Aguarde o tempo de piscada
+                frame.setTo(cv::Scalar(0, 0, 0)); // Limpe o frame para preto novamente
+            }
+        }
+
+        mostrandoSequencia = false;
     }
 
     void drawButtons(cv::Mat frame) {

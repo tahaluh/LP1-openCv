@@ -9,6 +9,7 @@ void draw(cv::Mat &img, cv::Mat &out) {
 
 int main() {
     VideoProcessor processor;
+    processor.iniciarJogo();
     processor.setInput(0);
     processor.displayOutput("Output Video");
     processor.setDelay(1000. / processor.getFrameRate());
